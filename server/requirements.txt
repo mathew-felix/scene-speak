@@ -1,0 +1,16 @@
+# Tested on Python 3.12 (3.13+ lacks wheels for some of these).
+fastapi==0.163.2
+uvicorn==0.54.0
+python-multipart==0.0.34
+python-dotenv==1.2.4
+openai==3.53.0
+soundfile==0.14.0
+numpy==2.5.5
+Pillow==13.0.0
+pillow-heif
+# 1.12.x required: 2.x ignores the espeak data dir and silently drops words.
+sherpa-onnx==1.12.40
+# Qwen vision runs through llama.cpp: `brew install llama.cpp` and put mmproj-F16.gguf in ../models
+# tests
+pytest==9.2.0
+httpx==0.28.1
