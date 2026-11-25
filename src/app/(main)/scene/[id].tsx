@@ -10,23 +10,29 @@ import { Colors, Spacing } from '@/constants/theme';
 import { useGallery } from '@/hooks/use-gallery';
 import type { GalleryImage } from '@/types/gallery';
 
+// Turns seconds into m:ss, for example 75 -> "1:15".
 const fmt = (seconds: number) => `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, '0')}`;
 
+// The player UI. It is a separate component from the screen below so the audio player
+// is created only when we know which audio file to load. It starts playing right away.
 function Player({ scene }: { scene: GalleryImage }) {
   const player = useAudioPlayer({ uri: scene.audioUri });
   const status = useAudioPlayerStatus(player);
 
+  // Play even if the iPhone's silent switch is on (the user asked to listen), and start now.
   useEffect(() => {
     void setAudioModeAsync({ playsInSilentMode: true });
     player.play();
   }, [player]);
 
+  // When the audio ends, rewind to the start so pressing play replays it.
   useEffect(() => {
     if (status.didJustFinish) {
       void player.seekTo(0);
     }
   }, [status.didJustFinish, player]);
 
+  // Jump forward or backward by `delta` seconds, never before 0 or past the end.
   const seek = (delta: number) => {
     void player.seekTo(Math.max(0, Math.min(status.duration, status.currentTime + delta)));
   };
@@ -60,6 +66,8 @@ function Player({ scene }: { scene: GalleryImage }) {
   );
 }
 
+// The screen for one scene. The id comes from the address (/scene/<id>); we look the
+// scene up in the saved gallery and show the player, or a message if it is gone.
 export default function SceneScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { images, refresh } = useGallery();

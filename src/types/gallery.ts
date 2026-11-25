@@ -1,3 +1,4 @@
+// Steps reported by the server, in order. Matches Stage in server/app.py.
 export type ProcessingStage = 'queued' | 'qwen' | 'openai' | 'tts' | 'done' | 'error';
 
 /** A scene is only stored after it was fully generated, so every entry is playable. */

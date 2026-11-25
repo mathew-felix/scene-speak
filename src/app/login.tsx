@@ -10,16 +10,20 @@ import { ThemedText } from '@/components/themed-text';
 import { Colors, Spacing } from '@/constants/theme';
 import { useAuth } from '@/contexts/auth-context';
 
+// Login screen. The check is a temporary static one (see lib/static-login.ts),
+// there is no server-side account yet.
 export default function LoginScreen() {
   const { isAuthenticated, signIn } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
+  // Already signed in (for example after returning here): skip the form.
   if (isAuthenticated) {
     return <Redirect href="/gallery" />;
   }
 
+  // Runs on the button press and on the keyboard's "return" key in the password field.
   const submit = () => {
     if (signIn(email, password)) {
       setError('');
@@ -35,7 +39,10 @@ export default function LoginScreen() {
       <SafeAreaView style={styles.safe}>
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.center}>
           <Animated.View entering={FadeInDown.duration(500)} style={styles.card}>
-            <View style={{ alignSelf: "center" }}><Logo size={72} /></View>
+            {/* The logo is wrapped so it can be centered while the inputs stay full width. */}
+            <View style={{ alignSelf: "center" }}>
+              <Logo size={72} />
+            </View>
             <ThemedText style={styles.title} accessibilityRole="header">
               SceneSpeak
             </ThemedText>
@@ -65,6 +72,7 @@ export default function LoginScreen() {
               onSubmitEditing={submit}
               style={styles.input}
             />
+            {/* Live region: screen readers announce the error as soon as it appears. */}
             {error ? (
               <ThemedText type="small" style={styles.error} accessibilityLiveRegion="polite">
                 {error}

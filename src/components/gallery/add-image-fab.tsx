@@ -3,8 +3,11 @@ import { ActivityIndicator, Pressable, StyleSheet, Text } from 'react-native';
 
 import { Colors } from '@/constants/theme';
 
+// Distance from the bottom edge. The gallery also uses it to leave room under the list.
 export const fabBottomOffset = 36;
 
+// The round + button (FAB = floating action button). It shows a spinner and ignores
+// taps while a photo is being processed.
 export function AddImageFab({ onPress, busy }: { onPress: () => void; busy?: boolean }) {
   return (
     <Pressable

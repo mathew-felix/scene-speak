@@ -5,6 +5,7 @@ import { Colors, Spacing } from '@/constants/theme';
 
 type Props = { visible: boolean; onClose: () => void; onTakePhoto: () => void; onUploadPhoto: () => void };
 
+// One tappable line of the menu.
 function Row({ label, onPress }: { label: string; onPress: () => void }) {
   return (
     <Pressable
@@ -16,6 +17,7 @@ function Row({ label, onPress }: { label: string; onPress: () => void }) {
   );
 }
 
+// Bottom sheet with the choices for adding a photo. Tapping the dark area closes it.
 export function AddImageMenu({ visible, onClose, onTakePhoto, onUploadPhoto }: Props) {
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>

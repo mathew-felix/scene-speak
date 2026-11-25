@@ -1,6 +1,7 @@
 import { Image } from 'expo-image';
 import { StyleSheet } from 'react-native';
 
+// The app logo (an eye with a sound wave). Rounded corners scale with the size.
 export function Logo({ size = 44 }: { size?: number }) {
   return (
     <Image

@@ -8,9 +8,12 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
+// One soft circle that drifts up and down and slightly grows and shrinks, very slowly
+// (about 14 s per cycle), so the screen feels calm instead of busy.
 function Glow({ color, size, top, left, delay }: { color: string; size: number; top: number; left: number; delay: number }) {
   const t = useSharedValue(0);
   useEffect(() => {
+    // 0 -> 1 -> 0 forever (`true` makes the animation reverse each time)
     t.set(withRepeat(withTiming(1, { duration: 14000 + delay, easing: Easing.inOut(Easing.sin) }), -1, true));
   }, [t, delay]);
   const style = useAnimatedStyle(() => ({

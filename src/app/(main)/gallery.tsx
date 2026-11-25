@@ -19,26 +19,34 @@ import { pickImageFromCamera, pickImageFromLibrary } from '@/lib/pick-image';
 import { persistImage, processScene } from '@/lib/process-scene';
 import type { GalleryImage, ProcessingStage } from '@/types/gallery';
 
+// Empty space kept under the list so the last row is never hidden behind the + button.
 const FAB_CLEARANCE = fabBottomOffset + 56 + Spacing.four;
 
+// Home screen after login: the list of saved scenes, the + button and the
+// processing flow for new photos.
 export default function GalleryScreen() {
   const { signOut } = useAuth();
   const { images, isLoading, refresh, addScene, removeImage } = useGallery();
-  const [menuVisible, setMenuVisible] = useState(false);
-  const [processing, setProcessing] = useState(false);
-  const [stage, setStage] = useState<ProcessingStage>('queued');
-  const [progress, setProgress] = useState(5);
+  const [menuVisible, setMenuVisible] = useState(false); // the "Choose from library / Take a photo" sheet
+  const [processing, setProcessing] = useState(false); // true while a photo is being processed
+  const [stage, setStage] = useState<ProcessingStage>('queued'); // current server step, for the overlay text
+  const [progress, setProgress] = useState(5); // 0-100, for the overlay bar
 
+  // Reload the saved scenes every time this screen comes into view, so a scene
+  // deleted or added elsewhere is reflected when the user comes back.
   useFocusEffect(
     useCallback(() => {
       void refresh();
     }, [refresh]),
   );
 
+  // Full flow for one photo: show progress, send to the server, wait for the audio,
+  // then save the scene. If anything fails, nothing is saved and an alert explains why.
   const handleNewImage = async (uri: string | null) => {
     if (!uri) {
       return;
     }
+    // A timestamp is a unique enough id for a single-user, on-device gallery.
     const id = `${Date.now()}`;
     setStage('queued');
     setProgress(5);
@@ -49,6 +57,7 @@ export default function GalleryScreen() {
         setStage(nextStage);
         setProgress(nextProgress);
       });
+      // The picked photo lives in a temporary cache, so copy it to permanent storage first.
       await addScene({ id, uri: persistImage(uri, id), createdAt: Date.now(), ...result });
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (error) {
@@ -60,13 +69,16 @@ export default function GalleryScreen() {
     }
   };
 
+  // Closes the menu, then opens the camera or the photo library and processes the result.
   const pick = async (picker: () => Promise<string | null>) => {
     setMenuVisible(false);
-    // Let the menu close before the system picker opens.
+    // Let the menu close before the system picker opens. iOS cannot present two
+    // modals at the same time, so opening the picker too early can silently fail.
     await new Promise((resolve) => setTimeout(resolve, 350));
     await handleNewImage(await picker());
   };
 
+  // Long-press on a card asks for confirmation before deleting the photo and its audio.
   const confirmDelete = (image: GalleryImage) => {
     Alert.alert('Delete this scene?', 'The photo and its audio will be removed from this device.', [
       { text: 'Cancel', style: 'cancel' },

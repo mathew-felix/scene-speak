@@ -8,8 +8,12 @@ type AuthContextValue = {
   signOut: () => void;
 };
 
+// React "context": a way to share the login state with any screen without passing it
+// down by hand. `null` means no provider is wrapping the component.
 const AuthContext = createContext<AuthContextValue | null>(null);
 
+// Wrap the app in this once (see app/_layout.tsx). The login lives in memory only,
+// so the user signs in again each time the app is started.
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
@@ -24,6 +28,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
+// Use this in any screen to read `isAuthenticated` or call `signIn` / `signOut`.
 export function useAuth(): AuthContextValue {
   const context = useContext(AuthContext);
   if (!context) {

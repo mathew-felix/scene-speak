@@ -1,3 +1,9 @@
+"""Narration step: turns the vision model's factual inventory into a spoken-style description.
+
+The language model is only a writer here. It is told that the inventory is the only truth, so it
+should rephrase and order the facts, not invent new ones (see SYSTEM_PROMPT).
+"""
+
 from __future__ import annotations
 
 import logging
@@ -12,6 +18,8 @@ logger = logging.getLogger("scenespeak.openai")
 # gpt-3.5-turbo has been retired for many accounts; fall back automatically.
 FALLBACK_MODELS = ("gpt-4o-mini", "gpt-4.1-mini")
 
+# The system prompt fixes the model's role, the order of the narration and the strict rules
+# (no guessing, no filler, keep colors/counts/positions). Low temperature below keeps it faithful.
 SYSTEM_PROMPT = (
     "You write audio descriptions for blind and low-vision listeners. "
     "You receive a verified inventory of one image. It is the only truth.\n\n"
@@ -40,15 +48,19 @@ class StoryError(RuntimeError):
 
 
 def _candidate_models() -> list[str]:
+    """Models to try in order: the configured one first, then fallbacks (without duplicates)."""
     models = [OPENAI_MODEL]
     models.extend(m for m in FALLBACK_MODELS if m != OPENAI_MODEL)
     return models
 
 
 def elaborate_story(scene_context: str) -> str:
+    """Send the inventory to OpenAI and return the narration text. Raises StoryError on failure."""
     if not OPENAI_API_KEY:
         raise StoryError("OPENAI_API_KEY is not set in server/.env")
 
+    # timeout: give up on a hung request after 60 s; max_retries: the SDK itself retries
+    # transient network/5xx errors twice before raising.
     client = OpenAI(api_key=OPENAI_API_KEY, timeout=60.0, max_retries=2)
     messages = [
         {"role": "system", "content": SYSTEM_PROMPT},
@@ -62,6 +74,8 @@ def elaborate_story(scene_context: str) -> str:
     last_error: Exception | None = None
     for model in _candidate_models():
         try:
+            # temperature 0.2 = very little randomness (stay close to the facts);
+            # max_tokens 450 comfortably fits the 90-170 word target.
             response = client.chat.completions.create(
                 model=model, temperature=0.2, max_tokens=450, messages=messages
             )
@@ -71,6 +85,8 @@ def elaborate_story(scene_context: str) -> str:
             if model != OPENAI_MODEL:
                 logger.warning("Used fallback model %s (configured: %s)", model, OPENAI_MODEL)
             return story
+        # Error handling: "model not found" means try the next model; every other failure
+        # is final and gets a message the app can show to the user.
         except openai.NotFoundError as exc:
             last_error = exc
             logger.warning("Model %s unavailable: %s", model, exc)

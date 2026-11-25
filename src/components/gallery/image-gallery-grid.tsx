@@ -13,6 +13,8 @@ type Props = {
   onLongPress: (image: GalleryImage) => void;
 };
 
+// Two-column grid of scene cards, with a spinner while loading and a hint when empty.
+// Tap opens the player; long-press asks to delete.
 export function ImageGalleryGrid({ images, isLoading, listBottomPadding, onOpen, onLongPress }: Props) {
   if (isLoading) {
     return (
@@ -21,6 +23,7 @@ export function ImageGalleryGrid({ images, isLoading, listBottomPadding, onOpen,
       </View>
     );
   }
+  // Nothing saved yet: tell the user what to do next.
   if (images.length === 0) {
     return (
       <View style={styles.center}>
